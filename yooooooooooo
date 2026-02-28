@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>8-Bit London Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #6CB4EE; font-family: 'Press Start 2P', monospace; touch-action: none; }
+        #gameCanvas { display: block; width: 100%; height: 100%; }
+        #info-box { position: absolute; top: 8%; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; background-color: rgba(20, 24, 32, 0.95); color: white; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 30px; box-sizing: border-box; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; text-align: left; box-shadow: 0px 15px 35px rgba(0,0,0,0.3); z-index: 10; font-family: 'Inter', sans-serif; }
+        #info-box.visible { opacity: 1; pointer-events: auto; }
+        #close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #aaaaaa; font-size: 24px; cursor: pointer; }
+        #info-title { font-size: 1.8rem; margin: 0; color: white; }
+        #info-role { color: #6CB4EE; font-size: 0.95rem; margin-bottom: 15px; text-transform: uppercase; }
+        #info-link { display: inline-block; padding: 10px 20px; background: white; color: black; text-decoration: none; border-radius: 6px; font-weight: 600; }
+        #instructions { position: absolute; top: 20px; left: 20px; color: white; font-size: 0.7rem; text-shadow: 2px 2px 0px black; z-index: 5; }
+        #touch-controls { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; box-sizing: border-box; z-index: 10; }
+        .btn { width: 60px; height: 60px; background: rgba(0,0,0,0.4); border: 3px solid white; border-radius: 5px; color: white; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; }
+        @media (min-width: 768px) { #touch-controls { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div id="instructions">Arrows to Move, Space to Jump</div>
+    <div id="info-box">
+        <button id="close-btn">×</button>
+        <h2 id="info-title"></h2>
+        <div id="info-role"></div>
+        <div id="info-desc"></div>
+        <a id="info-link" href="#" target="_blank">READ MORE -></a>
+        <div id="info-iframes"></div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="touch-controls">
+        <div class="btn" id="btn-left">◀</div>
+        <div class="btn" id="btn-right">▶</div>
+        <div class="btn" id="btn-jump">▲</div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const infoBox = document.getElementById('info-box');
+            
+            // --- DATA ---
+            const portfolioData = [
+                { x: 350, title: "HELLO! I'M LUKE", role: "AI Creative", desc: "Welcome to my 8-bit London!", url: null },
+                { x: 1900, title: "Special Projects", role: "Interaction Design", desc: "Designing the future of AI.", url: "https://specialprojects.studio/" }
+            ];
+
+            let width, height;
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            // --- PLAYER ---
+            const player = { x: 100, y: 0, vx: 0, vy: 0, speed: 8, jump: -12, grounded: false, size: 40 };
+            const keys = { ArrowLeft: false, ArrowRight: false, Space: false };
+
+            window.addEventListener('keydown', e => { if(e.code === 'Space') keys.Space = true; keys[e.key] = true; });
+            window.addEventListener('keyup', e => { if(e.code === 'Space') keys.Space = false; keys[e.key] = false; });
+
+            // --- MAIN LOOP ---
+            function loop() {
+                ctx.clearRect(0, 0, width, height);
+                
+                // Movement
+                if (keys.ArrowRight) player.vx = player.speed;
+                else if (keys.ArrowLeft) player.vx = -player.speed;
+                else player.vx = 0;
+
+                if (keys.Space && player.grounded) { player.vy = player.jump; player.grounded = false; }
+                
+                player.vy += 0.6; // Gravity
+                player.x += player.vx;
+                player.y += player.vy;
+
+                // Floor
+                if (player.y > height - 100) { player.y = height - 100; player.grounded = true; }
+
+                // Draw Player (8-bit Red Square)
+                ctx.fillStyle = "red";
+                ctx.fillRect(player.x - (player.x / 2), player.y, player.size, player.size);
+
+                // Draw Ground
+                ctx.fillStyle = "#A0AAB5";
+                ctx.fillRect(0, height - 60, width, 60);
+
+                // Check Interactions
+                portfolioData.forEach(item => {
+                    if (Math.abs(player.x - item.x) < 50) {
+                        document.getElementById('info-title').innerText = item.title;
+                        infoBox.classList.add('visible');
+                    }
+                });
+
+                requestAnimationFrame(loop);
+            }
+            
+            document.getElementById('close-btn').onclick = () => infoBox.classList.remove('visible');
+            loop();
+        };
+    </script>
+</body>
+</html>
